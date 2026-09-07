@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { RiskBadge } from '@/components/ui/Badge';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { formatCurrency, formatPercent } from '@/lib/utils';
 import { Sliders, ArrowRight, TrendingDown, Sparkles, RefreshCw, UserCheck } from 'lucide-react';
 import { mockCustomersList } from '@/mocks/data';
@@ -25,6 +26,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [simulation, setSimulation] = useState<WhatIfSimulationResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Sync with selected customer if customerId changes
   useEffect(() => {
@@ -39,6 +41,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
 
   const runSimulation = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await apiClient.simulateWhatIf({
         customer_id: customerId,
@@ -48,8 +51,8 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
         support_calls: supportCalls,
       });
       setSimulation(res);
-    } catch (err) {
-      console.error("Simulation error:", err);
+    } catch (err: any) {
+      setError(err?.message || "Simulation calculation failed.");
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +65,15 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <ErrorBanner
+          message={error}
+          onRetry={runSimulation}
+          isRetrying={isLoading}
+        />
+      )}
+
       {/* Account Preset Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-lg">
         <div className="flex items-center gap-2">

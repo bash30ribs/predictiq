@@ -43,12 +43,12 @@ export const AppHeader: React.FC = () => {
           title="Toggle simulated API errors to inspect error and retry handling states"
           className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
             simulateApiErrors
-              ? 'bg-[#FDF2F2] text-[#9E2A2B] border-[#F5B8B9] font-medium'
-              : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:bg-slate-50'
+              ? 'bg-[#FDF2F2] text-[#9E2A2B] border-[#F5B8B9] font-semibold animate-pulse'
+              : 'bg-white/80 text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
           <AlertCircle className="w-3.5 h-3.5" />
-          <span>Simulate API Error: {simulateApiErrors ? 'ON' : 'OFF'}</span>
+          <span>Simulate API Error: {simulateApiErrors ? 'ON (Click to Disable)' : 'OFF'}</span>
         </button>
 
         {/* User Profile */}
