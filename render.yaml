@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: predictiq
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: predictiq-data
+      mountPath: /opt/render/project/src/frontend/data
+      sizeGB: 1

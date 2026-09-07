@@ -8,8 +8,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { RiskBadge } from '@/components/ui/Badge';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { formatCurrency, formatPercent } from '@/lib/utils';
-import { Sliders, ArrowRight, TrendingDown, Sparkles, RefreshCw, UserCheck } from 'lucide-react';
+import { Sliders, ArrowRight, TrendingDown, Sparkles, RefreshCw, UserCheck, Lightbulb } from 'lucide-react';
 import { mockCustomersList } from '@/mocks/data';
+import { useAppStore } from '@/store/useAppStore';
 
 interface WhatIfSimulatorProps {
   initialCustomerId?: string;
@@ -18,6 +19,7 @@ interface WhatIfSimulatorProps {
 export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
   initialCustomerId = 'C1024',
 }) => {
+  const { isEasyMode } = useAppStore();
   const [customerId, setCustomerId] = useState<string>(initialCustomerId);
   const [tenure, setTenure] = useState<number>(8);
   const [monthlyCharges, setMonthlyCharges] = useState<number>(1299);
@@ -65,6 +67,24 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Easy Mode Banner */}
+      {isEasyMode && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50/70 to-emerald-50 border border-amber-200/90 shadow-xs flex items-start gap-3.5 animate-fadeIn">
+          <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800 text-sm font-bold shadow-2xs">
+            💡
+          </div>
+          <div className="flex-1 text-xs">
+            <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <span>Easy Mode: Customer Fix Simulator</span>
+              <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">Interactive</span>
+            </div>
+            <p className="text-slate-700 mt-1 leading-relaxed">
+              In plain English: Play with the levers below to test how to save this customer. For example, click <strong>"Apply Best Fix"</strong> to upgrade them to a 1-year plan with a 15% discount and resolve their support calls. Watch the risk gauge below drop!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Error Banner */}
       {error && (
         <ErrorBanner
@@ -78,7 +98,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-lg">
         <div className="flex items-center gap-2">
           <UserCheck className="w-4 h-4 text-[#12233D]" />
-          <span className="text-xs font-semibold text-slate-900">Active Simulation Account:</span>
+          <span className="text-xs font-semibold text-slate-900">
+            {isEasyMode ? "Select Customer to Save:" : "Active Simulation Account:"}
+          </span>
           <select
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
@@ -104,7 +126,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             }}
             leftIcon={<Sparkles className="w-3.5 h-3.5 text-[#C77D2E]" />}
           >
-            Apply Standard Retention Offer
+            {isEasyMode ? "⚡ Apply Best Fix: 1-Year + 15% Discount" : "Apply Standard Retention Offer"}
           </Button>
           <Button
             size="sm"
@@ -113,7 +135,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             onClick={runSimulation}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
           >
-            Recalculate Churn Risk
+            {isEasyMode ? "Recalculate Score" : "Recalculate Churn Risk"}
           </Button>
         </div>
       </div>
@@ -127,10 +149,12 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-[#12233D]" />
-                  Simulated Levers
+                  {isEasyMode ? "Test Changes for this Customer" : "Simulated Levers"}
                 </CardTitle>
                 <CardDescription>
-                  Adjust customer relationship variables to model retention impact
+                  {isEasyMode
+                    ? "Slide or click options below to model how changing their contract or fixing support calls helps keep them."
+                    : "Adjust customer relationship variables to model retention impact"}
                 </CardDescription>
               </div>
             </CardHeader>

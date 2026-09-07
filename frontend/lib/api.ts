@@ -132,7 +132,29 @@ export const apiClient = {
 
   // Dataset Upload & Quality
   async uploadDataset(file: File | null): Promise<DatasetUploadResponse> {
-    return mockHandlers.uploadDataset(file);
+    try {
+      const formData = new FormData();
+      if (file) {
+        formData.append('file', file);
+      }
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      return {
+        dataset_id: data.dataset_id,
+        file_name: data.file_name,
+        file_size_bytes: data.file_size_bytes,
+        row_count: data.row_count,
+        column_count: data.column_count,
+        status: data.status,
+        uploaded_at: data.uploaded_at,
+      };
+    } catch (err) {
+      return mockHandlers.uploadDataset(file);
+    }
   },
 
   async getDataQuality(datasetId?: string): Promise<DataQualityProfile> {
@@ -148,7 +170,7 @@ export const apiClient = {
     return mockHandlers.getModelEvaluation(modelId);
   },
 
-  // Customers
+  // Customers (Live SQLite with fallback)
   async getCustomers(options?: {
     page?: number;
     pageSize?: number;
@@ -157,7 +179,21 @@ export const apiClient = {
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
   }): Promise<CustomerBatchListResponse> {
-    return mockHandlers.getCustomers(options);
+    try {
+      const params = new URLSearchParams();
+      if (options?.page) params.set('page', String(options.page));
+      if (options?.pageSize) params.set('pageSize', String(options.pageSize));
+      if (options?.search) params.set('search', options.search);
+      if (options?.riskLevel) params.set('riskLevel', options.riskLevel);
+      if (options?.sortBy) params.set('sortBy', options.sortBy);
+      if (options?.sortDir) params.set('sortDir', options.sortDir);
+
+      const res = await fetch(`/api/customers?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch customers');
+      return await res.json();
+    } catch (err) {
+      return mockHandlers.getCustomers(options);
+    }
   },
 
   async getCustomerDetail(id: string): Promise<CustomerDetailResponse> {

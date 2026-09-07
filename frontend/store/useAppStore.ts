@@ -12,18 +12,23 @@ import {
 import { mockDatasetUpload, mockDataQuality, mockModelEvaluation } from '@/mocks/data';
 
 export interface UserSession {
+  id: string | number;
   email: string;
   name: string;
+  organization: string;
   role: string;
   token: string;
   isAuthenticated: boolean;
+  hasLoadedDemoData?: boolean;
 }
 
 interface AppStoreState {
   // 1. Auth Session
   user: UserSession | null;
-  login: (email: string, role?: string) => void;
+  login: (userOrEmail: string | Partial<UserSession>, role?: string) => void;
   logout: () => void;
+  loadDemoData: () => void;
+  clearWorkspaceData: () => void;
 
   // 2. Uploaded Dataset State
   activeDataset: DatasetUploadResponse | null;
@@ -66,36 +71,136 @@ interface AppStoreState {
   // 7. Global Demo / Error Testing Mode
   simulateApiErrors: boolean;
   setSimulateApiErrors: (enabled: boolean) => void;
+
+  // 8. Easy Mode / Plain English Mode
+  isEasyMode: boolean;
+  toggleEasyMode: () => void;
 }
 
-export const useAppStore = create<AppStoreState>((set) => ({
-  // Default logged in user for executive demo convenience
-  user: {
+// Initial session resolver (safe for SSR)
+function getInitialUser(): UserSession | null {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('predictiq_user_session');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored user session', e);
+    }
+  }
+  // Default to Elena Rostova demo session if no session stored
+  return {
+    id: 1,
     name: "Elena Rostova",
     email: "elena.rostova@predictiq.io",
+    organization: "Apex Enterprise Telecom",
     role: "VP of Customer Success",
     token: "mock-jwt-token-exec-session-9843",
     isAuthenticated: true,
-  },
+    hasLoadedDemoData: true,
+  };
+}
 
-  login: (email: string, role: string = "VP of Customer Success") =>
-    set({
-      user: {
-        name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+const initialUser = getInitialUser();
+
+export const useAppStore = create<AppStoreState>((set) => ({
+  user: initialUser,
+
+  login: (userOrEmail, role = "VP of Customer Success") => {
+    let sessionUser: UserSession;
+
+    if (typeof userOrEmail === 'object' && userOrEmail !== null) {
+      sessionUser = {
+        id: userOrEmail.id || Date.now(),
+        name: userOrEmail.name || 'Enterprise User',
+        email: userOrEmail.email || '',
+        organization: userOrEmail.organization || 'Enterprise Org',
+        role: userOrEmail.role || role,
+        token: userOrEmail.token || `jwt_${Date.now()}`,
+        isAuthenticated: true,
+        hasLoadedDemoData: userOrEmail.id === 1,
+      };
+    } else {
+      const email = userOrEmail;
+      sessionUser = {
+        id: email === 'elena.rostova@predictiq.io' ? 1 : Date.now(),
+        name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
         email,
+        organization: email === 'elena.rostova@predictiq.io' ? 'Apex Enterprise Telecom' : 'Enterprise Org',
         role,
         token: `mock-jwt-token-${Date.now()}`,
         isAuthenticated: true,
-      },
-    }),
+        hasLoadedDemoData: email === 'elena.rostova@predictiq.io',
+      };
+    }
 
-  logout: () =>
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('predictiq_user_session', JSON.stringify(sessionUser));
+      } catch (e) {
+        console.warn('Failed to persist user session', e);
+      }
+    }
+
+    // If User 1 (Demo account), load pre-seeded telecom dataset.
+    // If a newly created user (e.g. User 2), start with a clean workspace!
+    const isDemoUser = sessionUser.id === 1;
+
+    set({
+      user: sessionUser,
+      activeDataset: isDemoUser ? mockDatasetUpload : null,
+      dataQuality: isDemoUser ? mockDataQuality : null,
+      modelEvaluation: isDemoUser ? mockModelEvaluation : null,
+      selectedCustomerId: isDemoUser ? 'C1024' : null,
+    });
+  },
+
+  logout: () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('predictiq_user_session');
+      } catch (e) {
+        console.warn('Failed to clear user session', e);
+      }
+    }
     set({
       user: null,
+      activeDataset: null,
+      dataQuality: null,
+      modelEvaluation: null,
+      selectedCustomerId: null,
+      dashboardSummary: null,
+    });
+  },
+
+  loadDemoData: () =>
+    set((state) => {
+      const updatedUser = state.user ? { ...state.user, hasLoadedDemoData: true } : null;
+      if (typeof window !== 'undefined' && updatedUser) {
+        try {
+          localStorage.setItem('predictiq_user_session', JSON.stringify(updatedUser));
+        } catch (e) {}
+      }
+      return {
+        user: updatedUser,
+        activeDataset: mockDatasetUpload,
+        dataQuality: mockDataQuality,
+        modelEvaluation: mockModelEvaluation,
+        selectedCustomerId: "C1024",
+      };
     }),
 
-  activeDataset: mockDatasetUpload,
-  dataQuality: mockDataQuality,
+  clearWorkspaceData: () =>
+    set({
+      activeDataset: null,
+      dataQuality: null,
+      modelEvaluation: null,
+      selectedCustomerId: null,
+    }),
+
+  activeDataset: initialUser?.id === 1 ? mockDatasetUpload : null,
+  dataQuality: initialUser?.id === 1 ? mockDataQuality : null,
   setActiveDataset: (dataset, quality) =>
     set({
       activeDataset: dataset,
@@ -105,7 +210,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
   isTraining: false,
   trainingProgress: 0,
   trainingStepMessage: '',
-  modelEvaluation: mockModelEvaluation,
+  modelEvaluation: initialUser?.id === 1 ? mockModelEvaluation : null,
 
   startModelTraining: () =>
     set({
@@ -132,7 +237,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
   dashboardSummary: null,
   setDashboardSummary: (summary) => set({ dashboardSummary: summary }),
 
-  selectedCustomerId: "C1024",
+  selectedCustomerId: initialUser?.id === 1 ? "C1024" : null,
   selectedCustomer: null,
   setSelectedCustomer: (detail) =>
     set({
@@ -158,4 +263,16 @@ export const useAppStore = create<AppStoreState>((set) => ({
 
   simulateApiErrors: false,
   setSimulateApiErrors: (enabled) => set({ simulateApiErrors: enabled }),
+
+  isEasyMode: false,
+  toggleEasyMode: () =>
+    set((state) => {
+      const next = !state.isEasyMode;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('predictiq_easy_mode', String(next));
+        } catch (e) {}
+      }
+      return { isEasyMode: next };
+    }),
 }));

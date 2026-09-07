@@ -28,7 +28,8 @@ Thumbs.db
 *.db
 *.db-journal
 *.db-wal
-data/*.db
+data/
+frontend/data/
 predictiq.log
 *.log
 

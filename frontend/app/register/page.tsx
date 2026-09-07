@@ -35,7 +35,7 @@ export default function RegisterPage() {
         password,
       });
 
-      login(res.user.email, res.user.role);
+      login(res.user);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err?.message || 'Failed to create account. Please verify your details.');

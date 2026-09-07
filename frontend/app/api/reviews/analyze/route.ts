@@ -5,7 +5,14 @@ import { CustomerReviewAnalysisResponse, SentimentType } from '@/lib/types';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { review_text, customer_id = 'C1024', customer_name = 'Apex Digital Labs', source = 'NPS Survey' } = body;
+    const {
+      review_text,
+      customer_id = 'C1024',
+      customer_name = 'Apex Digital Labs',
+      source = 'NPS Survey',
+      user_id = 1,
+      organization = 'Enterprise Org',
+    } = body;
 
     if (!review_text || !review_text.trim()) {
       return NextResponse.json(
@@ -75,11 +82,13 @@ export async function POST(request: Request) {
     // Persist into SQLite
     const db = getDb();
     const insertStmt = db.prepare(`
-      INSERT INTO customer_reviews (customer_id, customer_name, review_text, sentiment, sentiment_score, churn_risk_delta, adjusted_probability, friction_keywords, recommended_playbook, source)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO customer_reviews (user_id, organization, customer_id, customer_name, review_text, sentiment, sentiment_score, churn_risk_delta, adjusted_probability, friction_keywords, recommended_playbook, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insertStmt.run(
+      user_id,
+      organization,
       customer_id,
       customer_name,
       review_text.trim(),

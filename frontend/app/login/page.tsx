@@ -4,34 +4,54 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { ShieldCheck, TrendingUp, Sparkles, ArrowRight, CheckCircle2, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAppStore();
-  const [email, setEmail] = useState('elena.rostova@predictiq.io');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('VP of Customer Success');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignIn = (e?: React.FormEvent) => {
+  const handleSignIn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!email) {
+      setError('Please enter your corporate email.');
+      return;
+    }
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, role);
+    setError(null);
+    try {
+      const res = await apiClient.loginUser({ email, role });
+      login(res.user);
       router.push('/dashboard');
-    }, 450);
+    } catch (err: any) {
+      setError(err?.message || 'Authentication failed. Please verify your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDemoSignIn = () => {
-    setEmail('elena.rostova@predictiq.io');
-    setRole('VP of Customer Success');
+  const handleDemoSignIn = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      login('elena.rostova@predictiq.io', 'VP of Customer Success');
+    setError(null);
+    try {
+      const res = await apiClient.loginUser({
+        email: 'elena.rostova@predictiq.io',
+        role: 'VP of Customer Success',
+      });
+      login(res.user);
       router.push('/dashboard');
-    }, 350);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to sign in to demo session.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -164,6 +184,12 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {error && (
+            <div className="mb-4">
+              <ErrorBanner message={error} />
+            </div>
+          )}
+
           {/* Credentials Form with glassmorphism */}
           <form onSubmit={handleSignIn} className="space-y-4 bg-white/70 backdrop-blur-md p-6 rounded-lg border border-slate-200/80 shadow-xs">
             <div>
@@ -173,6 +199,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
+                placeholder="e.g. anuj@democompany.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"
@@ -186,6 +213,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"

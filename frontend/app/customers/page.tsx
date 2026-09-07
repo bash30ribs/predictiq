@@ -7,10 +7,12 @@ import { CustomerListItem } from '@/lib/types';
 import { CustomerTable } from '@/components/customer/CustomerTable';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { Button } from '@/components/ui/Button';
-import { Download, Sliders } from 'lucide-react';
+import { Download, Sliders, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function CustomersPage() {
+  const { isEasyMode, user } = useAppStore();
   const [customers, setCustomers] = useState<CustomerListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -76,21 +78,45 @@ export default function CustomersPage() {
   return (
     <AppShell>
       <div className="space-y-6">
+        {/* Easy Mode Banner */}
+        {isEasyMode && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50/70 to-emerald-50 border border-amber-200/90 shadow-xs flex items-start gap-3.5 animate-fadeIn">
+            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800 text-sm font-bold shadow-2xs">
+              💡
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <span>Easy Mode: Customer Directory</span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                  Plain English
+                </span>
+              </div>
+              <p className="text-slate-700 mt-1 leading-relaxed">
+                Here is your customer list explained simply: <strong>Red</strong> = high risk of cancelling, <strong>Yellow</strong> = needs attention, <strong>Green</strong> = safe. You can filter the list below or click <strong>Test Fix</strong> to simulate how to save them!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              Customer Risk Directory
+              {isEasyMode
+                ? `Customer Health Directory (${user?.organization || 'All Accounts'})`
+                : "Customer Risk Directory"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Filterable directory of all accounts scored by machine learning churn likelihood with full factor attribution.
+              {isEasyMode
+                ? "Search through your customers to see who is happy and who needs attention."
+                : "Filterable directory of all accounts scored by machine learning churn likelihood with full factor attribution."}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Link href="/simulation">
               <Button size="sm" variant="outline" leftIcon={<Sliders className="w-3.5 h-3.5" />}>
-                Open What-If Sandbox
+                {isEasyMode ? "Open Fix Simulator" : "Open What-If Sandbox"}
               </Button>
             </Link>
             <Button
@@ -99,7 +125,7 @@ export default function CustomersPage() {
               onClick={handleExportCsv}
               leftIcon={<Download className="w-3.5 h-3.5" />}
             >
-              Export Risk CSV
+              {isEasyMode ? "Download Spreadsheet" : "Export Risk CSV"}
             </Button>
           </div>
         </div>
