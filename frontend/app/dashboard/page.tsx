@@ -107,7 +107,7 @@ export default function DashboardPage() {
         ) : summary ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* KPI 1: Total Monitored Customers */}
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-lg p-5 shadow-[0_4px_20px_-2px_rgba(18,35,61,0.04)]">
               <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-medium">
                 <span>Active Customer Accounts</span>
                 <Users className="w-4 h-4 text-slate-400" />
@@ -122,7 +122,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI 2: At-Risk Customer Count */}
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-lg p-5 shadow-[0_4px_20px_-2px_rgba(18,35,61,0.04)]">
               <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-medium">
                 <span>Accounts at High Risk</span>
                 <AlertTriangle className="w-4 h-4 text-[#9E2A2B]" />
@@ -136,7 +136,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI 3: Monthly Revenue at Risk */}
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-lg p-5 shadow-[0_4px_20px_-2px_rgba(18,35,61,0.04)]">
               <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-medium">
                 <span>Monthly Revenue at Risk</span>
                 <DollarSign className="w-4 h-4 text-[#C77D2E]" />
@@ -153,7 +153,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI 4: Overall Model Confidence */}
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-lg p-5 shadow-[0_4px_20px_-2px_rgba(18,35,61,0.04)]">
               <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-medium">
                 <span>Model Confidence</span>
                 <ShieldCheck className="w-4 h-4 text-[#2E6B4E]" />

@@ -10,7 +10,7 @@ export const Card: React.FC<CardProps> = ({ children, className, ...props }) => 
   return (
     <div
       className={cn(
-        "bg-white/85 backdrop-blur-md border border-slate-200/80 rounded-lg overflow-hidden shadow-[0_4px_20px_-4px_rgba(18,35,61,0.04)] transition-all",
+        "bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(18,35,61,0.05)] rounded-lg overflow-hidden transition-all",
         className
       )}
       {...props}
@@ -77,7 +77,7 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
 }) => {
   return (
-    <div className={cn("px-5 py-3 bg-slate-50/50 backdrop-blur-xs border-t border-slate-100/80 flex items-center", className)} {...props}>
+    <div className={cn("px-5 py-3 bg-slate-50/50 backdrop-blur-md border-t border-slate-100/80 flex items-center", className)} {...props}>
       {children}
     </div>
   );
