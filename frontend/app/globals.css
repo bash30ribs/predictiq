@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Primary Brand: Deep Navy / Ink Blue */
+  --color-navy-50: #f4f6fa;
+  --color-navy-100: #e8edf5;
+  --color-navy-200: #c9d6ea;
+  --color-navy-300: #9cb4d6;
+  --color-navy-400: #678cbe;
+  --color-navy-500: #4369a3;
+  --color-navy-600: #2f4e82;
+  --color-navy-700: #253d67;
+  --color-navy-800: #1b2d4c;
+  --color-navy-900: #12233D;
+  --color-navy-950: #0a1424;
+
+  /* Accent: Warm Amber (reserved strictly for risk/alerts/attention) */
+  --color-amber-50: #fef7ed;
+  --color-amber-100: #fdedd3;
+  --color-amber-200: #f8d29f;
+  --color-amber-500: #C77D2E;
+  --color-amber-600: #aa6521;
+  --color-amber-700: #884d19;
+
+  /* Semantic Restrained Risk Scale */
+  --color-risk-low: #2E6B4E;
+  --color-risk-low-bg: #EBF5F0;
+  --color-risk-low-border: #A3D9BE;
+
+  --color-risk-med: #C77D2E;
+  --color-risk-med-bg: #FEF7ED;
+  --color-risk-med-border: #F8D29F;
+
+  --color-risk-high: #9E2A2B;
+  --color-risk-high-bg: #FDF2F2;
+  --color-risk-high-border: #F5B8B9;
+
+  /* Neutral Enterprise Scale */
+  --color-surface-bg: #F8FAFC;
+  --color-surface-card: #FFFFFF;
+  --color-surface-border: #E2E8F0;
+  --color-surface-border-subtle: #F1F5F9;
+  --color-text-main: #0B0F14;
+  --color-text-body: #1E293B;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #94A3B8;
+}
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #0B0F14;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom restrained scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* High information density table tweaks */
+table {
+  border-collapse: collapse;
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
