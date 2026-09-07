@@ -11,6 +11,7 @@ import {
   Sliders,
   TrendingDown,
   ShieldCheck,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,12 @@ const navItems = [
     href: "/customers",
     icon: Users,
     badge: "864 at-risk",
+  },
+  {
+    label: "Customer Voice & NLP",
+    href: "/reviews",
+    icon: MessageSquareQuote,
+    badge: "NLP",
   },
   {
     label: "What-If Simulator",

@@ -1,42 +1,52 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
-import { ShieldCheck, TrendingUp, Sparkles, ArrowRight, CheckCircle2, Lock } from 'lucide-react';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { ShieldCheck, Sparkles, ArrowRight, CheckCircle2, Lock, UserPlus, Building2 } from 'lucide-react';
+import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { login } = useAppStore();
-  const [email, setEmail] = useState('elena.rostova@predictiq.io');
-  const [password, setPassword] = useState('••••••••••••');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [organization, setOrganization] = useState('');
   const [role, setRole] = useState('VP of Customer Success');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignIn = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, role);
-      router.push('/dashboard');
-    }, 450);
-  };
+    setError(null);
 
-  const handleDemoSignIn = () => {
-    setEmail('elena.rostova@predictiq.io');
-    setRole('VP of Customer Success');
-    setIsLoading(true);
-    setTimeout(() => {
-      login('elena.rostova@predictiq.io', 'VP of Customer Success');
+    try {
+      const res = await apiClient.registerUser({
+        name,
+        email,
+        organization,
+        role,
+        password,
+      });
+
+      login(res.user.email, res.user.role);
       router.push('/dashboard');
-    }, 350);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create account. Please verify your details.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F8FAFC]">
-      {/* Left Column: Executive Value Proposition */}
+      {/* Left Column: Executive Value Proposition with Gaussian Atmosphere */}
       <div className="md:w-1/2 bg-[#12233D] text-white p-8 md:p-14 flex flex-col justify-between border-r border-[#0a1424] relative overflow-hidden">
         {/* Gaussian Blur Atmospheric Orbs */}
         <div
@@ -54,43 +64,47 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-12">
-            <div className="w-8 h-8 rounded bg-white text-[#12233D] flex items-center justify-center font-bold text-base tracking-tight shadow-xs">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-12 group">
+            <div className="w-8 h-8 rounded bg-white text-[#12233D] flex items-center justify-center font-bold text-base tracking-tight shadow-xs group-hover:scale-105 transition-transform">
               P
             </div>
             <span className="text-xl font-bold tracking-tight text-white">PredictIQ</span>
             <span className="text-[10px] bg-white/15 text-slate-200 px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
               Enterprise
             </span>
-          </div>
+          </Link>
 
           <div className="max-w-md">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-xs font-semibold text-slate-200 mb-4 border border-white/10">
+              <Sparkles className="w-3.5 h-3.5 text-[#A3D9BE]" />
+              Enterprise Account Setup
+            </div>
+
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              Actionable Customer Churn Intelligence for Executive Leaders
+              Empower Your Retention Team with Machine Learning
             </h1>
             <p className="text-slate-300 text-sm mt-4 leading-relaxed">
-              Detect enterprise customer churn risk 60 days before renewal. Turn complex machine learning probabilities into concrete, revenue-protecting retention playbooks.
+              Create your corporate executive account. Monitor accounts across contract cycles, test what-if retention strategies, and safeguard recurring ARR.
             </p>
 
-            {/* Key Value Points */}
             <div className="mt-8 space-y-3.5">
               <div className="flex items-start gap-3 text-xs text-slate-200">
                 <CheckCircle2 className="w-4 h-4 text-[#A3D9BE] shrink-0 mt-0.5" />
-                <span><strong>No ML expertise required:</strong> Plain-language drivers explain exactly why each account is at risk.</span>
+                <span><strong>Persistent SQLite Database:</strong> Your team's account credentials and custom models persist locally across sessions.</span>
               </div>
               <div className="flex items-start gap-3 text-xs text-slate-200">
                 <CheckCircle2 className="w-4 h-4 text-[#A3D9BE] shrink-0 mt-0.5" />
-                <span><strong>What-if strategy simulation:</strong> Test contract term adjustments and support resolutions live before outreach.</span>
+                <span><strong>Full Platform Access:</strong> Executive Cockpit, Dataset Ingestion, SHAP Explainability, and What-If Sandbox.</span>
               </div>
               <div className="flex items-start gap-3 text-xs text-slate-200">
                 <CheckCircle2 className="w-4 h-4 text-[#A3D9BE] shrink-0 mt-0.5" />
-                <span><strong>Portfolio ARR prioritization:</strong> Target high-impact intervention programs ranked by protected revenue.</span>
+                <span><strong>Qualitative Sentiment Reader:</strong> Analyze customer feedback text to quantify direct churn risk shifts.</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Metrics callout */}
+        {/* Footer Metrics */}
         <div className="mt-12 pt-6 border-t border-white/10 grid grid-cols-3 gap-4 relative z-10 backdrop-blur-xs">
           <div>
             <div className="text-2xl font-bold text-white tracking-tight">$4.9M</div>
@@ -107,7 +121,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Column: Authentication Gate */}
+      {/* Right Column: Registration Form */}
       <div className="md:w-1/2 p-8 md:p-14 flex items-center justify-center relative overflow-hidden">
         {/* Soft Ambient Blurs */}
         <div
@@ -120,52 +134,40 @@ export default function LoginPage() {
         />
 
         <div className="max-w-md w-full relative z-10">
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Executive Sign In
+              Create Enterprise Account
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Enter your corporate credentials or launch the instant executive demonstration.
+              Your profile will be stored in the local SQLite database.
             </p>
           </div>
 
-          {/* Quick Demo Shortcut */}
-          <div className="mb-6 p-4 rounded-lg bg-[#EBF5F0]/80 backdrop-blur-md border border-[#A3D9BE] shadow-xs">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#2E6B4E]">
-                <Sparkles className="w-4 h-4" />
-                <span>Instant Demo Access</span>
-              </div>
-              <span className="text-[10px] bg-white/90 px-2 py-0.5 rounded text-[#2E6B4E] font-medium border border-[#A3D9BE]">
-                Pre-configured
-              </span>
+          {error && (
+            <div className="mb-4">
+              <ErrorBanner message={error} />
             </div>
-            <p className="text-xs text-slate-600 mb-3">
-              Explore the entire platform as <strong>Elena Rostova (VP of Customer Success)</strong> with pre-loaded enterprise dataset, calibrated XGBoost models, and simulated accounts.
-            </p>
-            <Button
-              className="w-full bg-[#2E6B4E] hover:bg-[#25573e] text-white border-[#2E6B4E]"
-              isLoading={isLoading}
-              onClick={handleDemoSignIn}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Sign In as VP of Customer Success
-            </Button>
-          </div>
+          )}
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+          {/* Form */}
+          <form
+            onSubmit={handleRegister}
+            className="space-y-3.5 bg-white/80 backdrop-blur-md p-6 rounded-lg border border-slate-200/80 shadow-xs"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Alex Morgan"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"
+              />
             </div>
-            <div className="relative flex justify-center text-[11px] uppercase">
-              <span className="bg-[#F8FAFC] px-3 text-slate-400 font-semibold tracking-wider">
-                Or Sign In with Corporate SSO
-              </span>
-            </div>
-          </div>
 
-          {/* Credentials Form with glassmorphism */}
-          <form onSubmit={handleSignIn} className="space-y-4 bg-white/70 backdrop-blur-md p-6 rounded-lg border border-slate-200/80 shadow-xs">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Corporate Email
@@ -173,10 +175,43 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
+                placeholder="alex.morgan@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Company / Org
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Acme Telecom"
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Executive Role
+                </label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900 font-medium"
+                >
+                  <option value="VP of Customer Success">VP Customer Success</option>
+                  <option value="Chief Revenue Officer">Chief Revenue Officer</option>
+                  <option value="Director of Retention">Director of Retention</option>
+                  <option value="Account Executive">Account Executive</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -186,25 +221,11 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Executive Role
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#12233D] text-slate-900 font-medium"
-              >
-                <option value="VP of Customer Success">VP of Customer Success</option>
-                <option value="Chief Revenue Officer">Chief Revenue Officer (CRO)</option>
-                <option value="Director of Retention">Director of Retention</option>
-              </select>
             </div>
 
             <Button
@@ -212,22 +233,23 @@ export default function LoginPage() {
               variant="primary"
               className="w-full mt-2"
               isLoading={isLoading}
+              leftIcon={<UserPlus className="w-4 h-4" />}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Sign In to Dashboard
+              Complete Registration & Enter
             </Button>
           </form>
 
           <div className="mt-5 text-center text-xs text-slate-600">
-            Need an enterprise account?{' '}
-            <Link href="/register" className="font-semibold text-[#12233D] hover:underline">
-              Create an account
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-[#12233D] hover:underline">
+              Sign In here
             </Link>
           </div>
 
           <div className="mt-6 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
             <Lock className="w-3 h-3 text-slate-400" />
-            <span>SOC2 Type II Certified • 256-bit AES Encryption</span>
+            <span>SQLite Embedded Database • Local Persistent Storage</span>
           </div>
         </div>
       </div>

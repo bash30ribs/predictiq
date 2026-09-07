@@ -1,16 +1,38 @@
 /**
  * PredictIQ Shared TypeScript Definitions
- * Canonical data contracts between Frontend and Backend (FastAPI / ML Engine)
+ * Canonical data contracts between Frontend and Backend (FastAPI / ML Engine / SQLite)
  */
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ConfidenceLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 export type PredictionOutcome = 'Churn' | 'Retain';
 export type ContractType = 'Month-to-month' | 'One year' | 'Two year';
+export type SentimentType = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'CRITICAL_FRICTION';
 
 export interface TopFactor {
   feature: string;
   impact: number; // positive increases churn risk, negative reduces churn risk
+}
+
+// 0. User Account & Registration
+export interface UserRegistrationRequest {
+  name: string;
+  email: string;
+  password?: string;
+  organization: string;
+  role: string;
+}
+
+export interface UserAuthResponse {
+  user: {
+    id: number | string;
+    name: string;
+    email: string;
+    organization: string;
+    role: string;
+    created_at: string;
+  };
+  token: string;
 }
 
 // 1. Prediction Request & Response
@@ -280,4 +302,26 @@ export interface BusinessImpactSummary {
   segments: SegmentImpact[];
   contract_breakdown: ContractImpact[];
   retention_scenarios: RetentionScenario[];
+}
+
+// 8. Qualitative Customer Review & Sentiment Analysis
+export interface CustomerReviewAnalysisRequest {
+  customer_id?: string;
+  customer_name?: string;
+  review_text: string;
+  source?: 'NPS Survey' | 'Support Ticket' | 'Exit Interview' | 'Executive QBR';
+}
+
+export interface CustomerReviewAnalysisResponse {
+  id?: number | string;
+  customer_id?: string;
+  customer_name?: string;
+  review_text: string;
+  sentiment: SentimentType;
+  sentiment_score: number; // -1.0 to 1.0
+  churn_risk_delta: number; // e.g. +0.25 or -0.15
+  adjusted_probability: number;
+  friction_keywords: string[];
+  recommended_playbook: string;
+  created_at: string;
 }

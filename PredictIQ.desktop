@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=PredictIQ
+GenericName=Enterprise Churn Intelligence
+Comment=Launch PredictIQ Customer Retention Cockpit
+Exec=/bin/bash /home/ribs/freee/run.sh
+Path=/home/ribs/freee
+Icon=applications-internet
+Terminal=true
+Categories=Development;Office;Business;
+StartupNotify=true
