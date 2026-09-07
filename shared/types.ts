@@ -309,7 +309,9 @@ export interface CustomerReviewAnalysisRequest {
   customer_id?: string;
   customer_name?: string;
   review_text: string;
-  source?: 'NPS Survey' | 'Support Ticket' | 'Exit Interview' | 'Executive QBR';
+  source?: 'NPS Survey' | 'Support Ticket' | 'Exit Interview' | 'Executive QBR' | string;
+  user_id?: number | string;
+  organization?: string;
 }
 
 export interface CustomerReviewAnalysisResponse {

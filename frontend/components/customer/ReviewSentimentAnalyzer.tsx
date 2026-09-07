@@ -75,6 +75,8 @@ export const ReviewSentimentAnalyzer: React.FC = () => {
   const [latestAnalysis, setLatestAnalysis] = useState<CustomerReviewAnalysisResponse | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [isSeedingReviews, setIsSeedingReviews] = useState<boolean>(false);
+
   const fetchReviews = async () => {
     try {
       setLoadingList(true);
@@ -88,6 +90,22 @@ export const ReviewSentimentAnalyzer: React.FC = () => {
       console.error('Failed to fetch reviews:', err);
     } finally {
       setLoadingList(false);
+    }
+  };
+
+  const handleSeedReviews = async () => {
+    setIsSeedingReviews(true);
+    try {
+      await fetch(`/api/reviews/seed?user_id=${user?.id || 1}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user?.id || 1, organization: user?.organization }),
+      });
+      await fetchReviews();
+    } catch (err) {
+      console.error('Failed to seed reviews:', err);
+    } finally {
+      setIsSeedingReviews(false);
     }
   };
 
@@ -504,6 +522,17 @@ export const ReviewSentimentAnalyzer: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            {user?.id !== 1 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleSeedReviews}
+                isLoading={isSeedingReviews}
+                leftIcon={<Sparkles className="w-3 h-3 text-[#C77D2E]" />}
+              >
+                Seed 3 Sample Reviews
+              </Button>
+            )}
             {/* Search Input */}
             <div className="relative flex-1 sm:w-56">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />

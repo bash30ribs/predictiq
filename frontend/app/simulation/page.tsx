@@ -7,6 +7,7 @@ import { WhatIfSimulator } from '@/components/simulation/WhatIfSimulator';
 import { Button } from '@/components/ui/Button';
 import { Sliders, HelpCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useAppStore } from '@/store/useAppStore';
 
 function SimulationContent() {
   const searchParams = useSearchParams();
@@ -16,6 +17,8 @@ function SimulationContent() {
 }
 
 export default function SimulationPage() {
+  const { isEasyMode } = useAppStore();
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -23,17 +26,19 @@ export default function SimulationPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              Interactive What-If Simulation Sandbox
+              {isEasyMode ? "Fix & Save Customers Simulator" : "Interactive What-If Simulation Sandbox"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Simulate the predictive impact of renegotiating contract terms, resolving support tickets, or discounting tiers.
+              {isEasyMode
+                ? "Test what happens if you offer a 1-year discount or solve their open support tickets."
+                : "Simulate the predictive impact of renegotiating contract terms, resolving support tickets, or discounting tiers."}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Link href="/impact">
               <Button size="sm" variant="outline" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                View Aggregate Revenue at Risk
+                {isEasyMode ? "See Money & Savings" : "View Aggregate Revenue at Risk"}
               </Button>
             </Link>
           </div>
@@ -46,9 +51,17 @@ export default function SimulationPage() {
           </div>
           <div className="text-xs text-slate-600 leading-relaxed">
             <span className="font-semibold text-slate-900 block mb-0.5">
-              How the What-If Engine Works:
+              {isEasyMode ? "How This Save Simulator Works:" : "How the What-If Engine Works:"}
             </span>
-            Adjusting levers immediately recalculates the model's decision path using the active XGBoost feature weights. Compare the <strong className="text-slate-800">Baseline Churn Probability</strong> against the <strong className="text-[#2E6B4E]">Simulated Outcome</strong> to quantify expected risk mitigation before committing customer success resources.
+            {isEasyMode ? (
+              <span>
+                Move the sliders below or click <strong>⚡ Apply Best Fix</strong> to see how much more loyal the customer becomes! Watch the risk score drop from <strong className="text-[#9E2A2B]">Danger</strong> to <strong className="text-[#2E6B4E]">Safe</strong> in real time.
+              </span>
+            ) : (
+              <span>
+                Adjusting levers immediately recalculates the model's decision path using the active XGBoost feature weights. Compare the <strong className="text-slate-800">Baseline Churn Probability</strong> against the <strong className="text-[#2E6B4E]">Simulated Outcome</strong> to quantify expected risk mitigation before committing customer success resources.
+              </span>
+            )}
           </div>
         </div>
 

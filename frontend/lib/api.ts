@@ -24,6 +24,19 @@ import {
 } from '@/lib/types';
 import { mockHandlers, setForceError, getForceError } from '@/mocks/handlers';
 
+function getActiveUserId(): number {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('predictiq_user_session');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.id) return Number(parsed.id);
+      }
+    } catch {}
+  }
+  return 1;
+}
+
 export const apiClient = {
   // 0. Database User Auth & Registration (SQLite)
   async registerUser(data: UserRegistrationRequest): Promise<UserAuthResponse> {
@@ -39,7 +52,6 @@ export const apiClient = {
       }
       return await res.json();
     } catch (err: any) {
-      // Client-side fallback if fetch is unavailable
       if (err.message && !err.message.includes('fetch')) throw err;
       return {
         user: {
@@ -86,10 +98,11 @@ export const apiClient = {
   // Qualitative Customer Review NLP Sentiment Analysis (SQLite)
   async analyzeCustomerReview(data: CustomerReviewAnalysisRequest): Promise<CustomerReviewAnalysisResponse> {
     try {
+      const activeUserId = data.user_id || getActiveUserId();
       const res = await fetch('/api/reviews/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, user_id: activeUserId }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -115,14 +128,26 @@ export const apiClient = {
     }
   },
 
-  async getCustomerReviews(): Promise<{ reviews: CustomerReviewAnalysisResponse[] }> {
+  async getCustomerReviews(userId?: number | string): Promise<{ reviews: CustomerReviewAnalysisResponse[] }> {
     try {
-      const res = await fetch('/api/reviews');
+      const activeUserId = userId ?? getActiveUserId();
+      const res = await fetch(`/api/reviews?user_id=${activeUserId}`);
       if (!res.ok) throw new Error('Failed to fetch reviews.');
       return await res.json();
     } catch (err) {
       return { reviews: [] };
     }
+  },
+
+  async seedSampleReviews(userId?: number | string, organization?: string): Promise<{ success: boolean; count: number }> {
+    const activeUserId = userId ?? getActiveUserId();
+    const res = await fetch(`/api/reviews/seed?user_id=${activeUserId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: activeUserId, organization }),
+    });
+    if (!res.ok) throw new Error('Failed to seed sample reviews.');
+    return await res.json();
   },
 
   // Executive Dashboard
@@ -131,12 +156,14 @@ export const apiClient = {
   },
 
   // Dataset Upload & Quality
-  async uploadDataset(file: File | null): Promise<DatasetUploadResponse> {
+  async uploadDataset(file: File | null, userId?: number | string): Promise<DatasetUploadResponse> {
     try {
+      const activeUserId = userId ?? getActiveUserId();
       const formData = new FormData();
       if (file) {
         formData.append('file', file);
       }
+      formData.append('user_id', String(activeUserId));
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -170,7 +197,7 @@ export const apiClient = {
     return mockHandlers.getModelEvaluation(modelId);
   },
 
-  // Customers (Live SQLite with fallback)
+  // Customers (Live SQLite with per-user scoping)
   async getCustomers(options?: {
     page?: number;
     pageSize?: number;
@@ -178,9 +205,12 @@ export const apiClient = {
     riskLevel?: string;
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
+    userId?: number | string;
   }): Promise<CustomerBatchListResponse> {
     try {
+      const activeUserId = options?.userId ?? getActiveUserId();
       const params = new URLSearchParams();
+      params.set('user_id', String(activeUserId));
       if (options?.page) params.set('page', String(options.page));
       if (options?.pageSize) params.set('pageSize', String(options.pageSize));
       if (options?.search) params.set('search', options.search);
@@ -194,6 +224,20 @@ export const apiClient = {
     } catch (err) {
       return mockHandlers.getCustomers(options);
     }
+  },
+
+  async seedSampleCustomers(userId?: number | string): Promise<{ success: boolean; count: number; message?: string }> {
+    const activeUserId = userId ?? getActiveUserId();
+    const res = await fetch(`/api/customers/seed?user_id=${activeUserId}`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to seed sample customers');
+    return await res.json();
+  },
+
+  async clearCustomerWorkspace(userId?: number | string): Promise<{ success: boolean }> {
+    const activeUserId = userId ?? getActiveUserId();
+    const res = await fetch(`/api/customers/seed?user_id=${activeUserId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to clear customer workspace');
+    return await res.json();
   },
 
   async getCustomerDetail(id: string): Promise<CustomerDetailResponse> {

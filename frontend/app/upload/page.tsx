@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 
 export default function UploadPage() {
-  const { activeDataset, dataQuality, setActiveDataset } = useAppStore();
+  const { activeDataset, dataQuality, setActiveDataset, isEasyMode, user } = useAppStore();
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingQuality, setIsLoadingQuality] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export default function UploadPage() {
     setIsUploading(true);
     setError(null);
     try {
-      const uploadRes = await apiClient.uploadDataset(file || null);
+      const uploadRes = await apiClient.uploadDataset(file || null, user?.id);
       const qualityRes = await apiClient.getDataQuality(uploadRes.dataset_id);
       setActiveDataset(uploadRes, qualityRes);
     } catch (err: any) {
@@ -73,14 +73,36 @@ export default function UploadPage() {
   return (
     <AppShell>
       <div className="space-y-6">
+        {/* Easy Mode Banner */}
+        {isEasyMode && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50/70 to-emerald-50 border border-amber-200/90 shadow-xs flex items-start gap-3.5 animate-fadeIn">
+            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800 text-sm font-bold shadow-2xs">
+              💡
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <span>Easy Mode: Add Your Customer Spreadsheet</span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                  Plain English
+                </span>
+              </div>
+              <p className="text-slate-700 mt-1 leading-relaxed">
+                Add your customer records here! Simply drop your CSV file below or click <strong>Browse Files</strong>. Our system will check the file for mistakes and automatically teach the AI how your customers behave.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              Dataset Upload & Quality Audit
+              {isEasyMode ? "Add Your Customer Spreadsheet" : "Dataset Upload & Quality Audit"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Ingest customer relationship records, inspect schema integrity, and audit data health before ML training.
+              {isEasyMode
+                ? "Drop your customer spreadsheet here so our system can check for missing information and study churn patterns."
+                : "Ingest customer relationship records, inspect schema integrity, and audit data health before ML training."}
             </p>
           </div>
 
@@ -91,7 +113,7 @@ export default function UploadPage() {
                 size="sm"
                 rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               >
-                Proceed to Model Training
+                {isEasyMode ? "Go to AI Brain Training" : "Proceed to Model Training"}
               </Button>
             </Link>
           </div>

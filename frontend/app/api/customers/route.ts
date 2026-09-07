@@ -15,14 +15,7 @@ export async function GET(request: NextRequest) {
     const sortDir = searchParams.get('sortDir') === 'asc' ? 'ASC' : 'DESC';
 
     const db = getDb();
-
-    // Check if the requested user has customers in the database
-    let activeUserId = requestedUserId;
-    const userCustCount = db.prepare('SELECT COUNT(*) as count FROM customers WHERE user_id = ?').get(requestedUserId) as { count: number };
-    if (userCustCount.count === 0) {
-      // Fallback to demo portfolio (user_id 1) so charts and tables never break
-      activeUserId = 1;
-    }
+    const activeUserId = requestedUserId;
 
     // Build SQL query
     let baseQuery = 'FROM customers WHERE user_id = ?';

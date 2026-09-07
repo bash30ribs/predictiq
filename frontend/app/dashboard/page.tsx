@@ -41,7 +41,7 @@ export default function DashboardPage() {
     try {
       const [sumRes, custRes] = await Promise.all([
         apiClient.getDashboardSummary(),
-        apiClient.getCustomers({ pageSize: 5, riskLevel: 'HIGH', sortBy: 'probability', sortDir: 'desc' }),
+        apiClient.getCustomers({ pageSize: 5, riskLevel: 'HIGH', sortBy: 'probability', sortDir: 'desc', userId: user?.id }),
       ]);
       setSummary(sumRes);
       setDashboardSummary(sumRes);
@@ -55,7 +55,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [user?.id]);
 
   return (
     <AppShell>
@@ -321,11 +321,27 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
-                {highRiskAccounts.map((c) => (
-                  <tr key={c.customer_id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-2.5 px-4 font-mono font-medium text-slate-700">
-                      {c.customer_id}
+                {highRiskAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-slate-500 text-xs">
+                      <div className="space-y-2">
+                        <div>No high-risk accounts currently flagged for {user?.organization || 'your organization'}.</div>
+                        {user?.id !== 1 && (
+                          <Link href="/customers">
+                            <Button size="sm" variant="outline" className="mt-1">
+                              Go to Customer Directory to Seed or Upload Data
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </td>
+                  </tr>
+                ) : (
+                  highRiskAccounts.map((c) => (
+                    <tr key={c.customer_id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2.5 px-4 font-mono font-medium text-slate-700">
+                        {c.customer_id}
+                      </td>
                     <td className="py-2.5 px-4 font-medium text-slate-900">
                       {c.name}
                     </td>
@@ -371,7 +387,8 @@ export default function DashboardPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
             </table>
           </div>

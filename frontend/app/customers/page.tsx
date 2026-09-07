@@ -7,7 +7,7 @@ import { CustomerListItem } from '@/lib/types';
 import { CustomerTable } from '@/components/customer/CustomerTable';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { Button } from '@/components/ui/Button';
-import { Download, Sliders, Sparkles } from 'lucide-react';
+import { Download, Sliders, Sparkles, UploadCloud, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -26,6 +26,9 @@ export default function CustomersPage() {
   const [sortBy, setSortBy] = useState('probability');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedSuccess, setSeedSuccess] = useState<string | null>(null);
+
   const fetchCustomers = async () => {
     setIsLoading(true);
     setError(null);
@@ -37,6 +40,7 @@ export default function CustomersPage() {
         riskLevel: selectedRisk,
         sortBy,
         sortDir,
+        userId: user?.id,
       });
       setCustomers(res.customers);
       setTotal(res.total);
@@ -48,9 +52,37 @@ export default function CustomersPage() {
     }
   };
 
+  const handleSeedAccounts = async () => {
+    setIsSeeding(true);
+    setError(null);
+    try {
+      const res = await apiClient.seedSampleCustomers(user?.id);
+      setSeedSuccess(res.message || "Successfully loaded 10 sample enterprise accounts.");
+      setTimeout(() => setSeedSuccess(null), 4000);
+      await fetchCustomers();
+    } catch (err: any) {
+      setError(err?.message || "Failed to seed sample accounts.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearWorkspace = async () => {
+    if (!confirm("Are you sure you want to clear all customer data in this workspace?")) return;
+    setIsLoading(true);
+    try {
+      await apiClient.clearCustomerWorkspace(user?.id);
+      await fetchCustomers();
+    } catch (err: any) {
+      setError(err?.message || "Failed to clear workspace.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
-  }, [page, searchQuery, selectedRisk, sortBy, sortDir]);
+  }, [user?.id, page, searchQuery, selectedRisk, sortBy, sortDir]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -114,6 +146,27 @@ export default function CustomersPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {user?.id !== 1 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleSeedAccounts}
+                isLoading={isSeeding}
+                leftIcon={<Sparkles className="w-3.5 h-3.5 text-[#C77D2E]" />}
+              >
+                Seed 10 Accounts
+              </Button>
+            )}
+            {customers.length > 0 && user?.id !== 1 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClearWorkspace}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                Clear Data
+              </Button>
+            )}
             <Link href="/simulation">
               <Button size="sm" variant="outline" leftIcon={<Sliders className="w-3.5 h-3.5" />}>
                 {isEasyMode ? "Open Fix Simulator" : "Open What-If Sandbox"}
@@ -123,12 +176,21 @@ export default function CustomersPage() {
               size="sm"
               variant="outline"
               onClick={handleExportCsv}
+              disabled={customers.length === 0}
               leftIcon={<Download className="w-3.5 h-3.5" />}
             >
               {isEasyMode ? "Download Spreadsheet" : "Export Risk CSV"}
             </Button>
           </div>
         </div>
+
+        {/* Seed Success Banner */}
+        {seedSuccess && (
+          <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{seedSuccess}</span>
+          </div>
+        )}
 
         {/* Error Banner */}
         {error && (
@@ -139,29 +201,67 @@ export default function CustomersPage() {
           />
         )}
 
-        {/* Sortable & Filterable Table */}
-        <CustomerTable
-          customers={customers}
-          total={total}
-          page={page}
-          pageSize={pageSize}
-          totalPages={totalPages}
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => {
-            setSearchQuery(q);
-            setPage(1);
-          }}
-          selectedRisk={selectedRisk}
-          onRiskChange={(r) => {
-            setSelectedRisk(r);
-            setPage(1);
-          }}
-          sortBy={sortBy}
-          sortDir={sortDir}
-          onSort={handleSort}
-          onPageChange={(p) => setPage(p)}
-        />
+        {/* Sortable & Filterable Table or Empty Workspace State */}
+        {customers.length === 0 && !isLoading ? (
+          <div className="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-4 shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 text-[#C77D2E] mx-auto flex items-center justify-center text-xl font-bold shadow-2xs">
+              📂
+            </div>
+            <div className="max-w-md mx-auto">
+              <h3 className="text-base font-semibold text-slate-900">
+                {isEasyMode ? "No Customers Added Yet" : "Isolated Workspace: No Accounts Ingested"}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {isEasyMode
+                  ? `Your organization (${user?.organization || 'Your Workspace'}) starts with a clean slate! You can load sample customers to test or upload your own spreadsheet.`
+                  : `Your organization (${user?.organization || 'Enterprise Org'}) has an isolated customer database. No customer records have been uploaded or seeded yet.`}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link href="/upload">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<UploadCloud className="w-4 h-4" />}
+                >
+                  {isEasyMode ? "Upload Customer Spreadsheet" : "Upload Customer CSV"}
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSeedAccounts}
+                isLoading={isSeeding}
+                leftIcon={<Sparkles className="w-4 h-4 text-[#C77D2E]" />}
+              >
+                {isEasyMode ? "Load 10 Sample Customers" : "Seed 10 Enterprise Accounts"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <CustomerTable
+            customers={customers}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              setPage(1);
+            }}
+            selectedRisk={selectedRisk}
+            onRiskChange={(r) => {
+              setSelectedRisk(r);
+              setPage(1);
+            }}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSort={handleSort}
+            onPageChange={(p) => setPage(p)}
+          />
+        )}
       </div>
     </AppShell>
   );

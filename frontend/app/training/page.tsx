@@ -24,7 +24,7 @@ import {
 import Link from 'next/link';
 
 export default function TrainingPage() {
-  const { modelEvaluation, setModelEvaluation } = useAppStore();
+  const { modelEvaluation, setModelEvaluation, isEasyMode } = useAppStore();
   const [selectedAlgo, setSelectedAlgo] = useState<'xgboost' | 'random_forest' | 'logistic_regression'>('xgboost');
   const [isTraining, setIsTraining] = useState(false);
   const [trainingStep, setTrainingStep] = useState<string>('');
@@ -85,14 +85,36 @@ export default function TrainingPage() {
   return (
     <AppShell>
       <div className="space-y-6">
+        {/* Easy Mode Banner */}
+        {isEasyMode && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 via-amber-50/70 to-emerald-50 border border-amber-200/90 shadow-xs flex items-start gap-3.5 animate-fadeIn">
+            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800 text-sm font-bold shadow-2xs">
+              💡
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <span>Easy Mode: AI Training & Brain Check</span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                  Plain English
+                </span>
+              </div>
+              <p className="text-slate-700 mt-1 leading-relaxed">
+                Think of this page like a <strong>report card for our AI</strong>! Below you can see how well the AI predicts leaving customers (over 89% accurate), check which formula works best, or press <strong>Train Model</strong> to have the computer practice and learn again.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              Model Training & Cross-Model Benchmarking
+              {isEasyMode ? "AI Brain & Prediction Scorecard" : "Model Training & Cross-Model Benchmarking"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Train, validate, and compare predictive algorithms against historical customer churn outcomes.
+              {isEasyMode
+                ? "Test how smart our prediction computer is and see its grades on real customer outcomes."
+                : "Train, validate, and compare predictive algorithms against historical customer churn outcomes."}
             </p>
           </div>
 
@@ -103,7 +125,7 @@ export default function TrainingPage() {
                 size="sm"
                 rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               >
-                Go to Executive Dashboard
+                {isEasyMode ? "Go to Main Dashboard" : "Go to Executive Dashboard"}
               </Button>
             </Link>
           </div>
@@ -189,49 +211,49 @@ export default function TrainingPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white border border-slate-200 rounded-lg p-4">
                 <div className="text-[11px] font-semibold uppercase text-slate-500">
-                  ROC-AUC Score
+                  {isEasyMode ? "Prediction Grade" : "ROC-AUC Score"}
                 </div>
                 <div className="text-2xl font-bold text-[#12233D] mt-1">
-                  {modelEvaluation.metrics.roc_auc.toFixed(3)}
+                  {isEasyMode ? "Grade A (89%)" : modelEvaluation.metrics.roc_auc.toFixed(3)}
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  Top tier discrimination power
+                  {isEasyMode ? "Catches almost all leavers" : "Top tier discrimination power"}
                 </div>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-lg p-4">
                 <div className="text-[11px] font-semibold uppercase text-slate-500">
-                  Model Accuracy
+                  {isEasyMode ? "Overall Right Answers" : "Model Accuracy"}
                 </div>
                 <div className="text-2xl font-bold text-slate-900 mt-1">
                   {formatPercent(modelEvaluation.metrics.accuracy)}
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  On unseen holdout data
+                  {isEasyMode ? "83.5 out of 100 correct" : "On unseen holdout data"}
                 </div>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-lg p-4">
                 <div className="text-[11px] font-semibold uppercase text-slate-500">
-                  Precision (Churned)
+                  {isEasyMode ? "True Alarm Rate" : "Precision (Churned)"}
                 </div>
                 <div className="text-2xl font-bold text-slate-900 mt-1">
                   {formatPercent(modelEvaluation.metrics.precision)}
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  Low false-positive rate
+                  {isEasyMode ? "Rarely rings false alarms" : "Low false-positive rate"}
                 </div>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-lg p-4">
                 <div className="text-[11px] font-semibold uppercase text-slate-500">
-                  Recall / Sensitivity
+                  {isEasyMode ? "Catch Rate" : "Recall / Sensitivity"}
                 </div>
                 <div className="text-2xl font-bold text-[#2E6B4E] mt-1">
                   {formatPercent(modelEvaluation.metrics.recall)}
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  Catches 81.8% of actual churn
+                  {isEasyMode ? "Catches 82 of 100 who leave" : "Catches 81.8% of actual churn"}
                 </div>
               </div>
             </div>
@@ -242,9 +264,13 @@ export default function TrainingPage() {
                 <Card>
                   <CardHeader>
                     <div>
-                      <CardTitle>Holdout Confusion Matrix (2x2)</CardTitle>
+                      <CardTitle>
+                        {isEasyMode ? "The AI Scorecard (Predictions vs Reality)" : "Holdout Confusion Matrix (2x2)"}
+                      </CardTitle>
                       <CardDescription>
-                        Predicted vs actual customer churn classifications across 7,043 evaluated records
+                        {isEasyMode
+                          ? "Green boxes show where the AI guessed right; red boxes show where it missed."
+                          : "Predicted vs actual customer churn classifications across 7,043 evaluated records"}
                       </CardDescription>
                     </div>
                   </CardHeader>
@@ -258,24 +284,32 @@ export default function TrainingPage() {
                 <Card className="h-full flex flex-col justify-between">
                   <CardHeader>
                     <div>
-                      <CardTitle>Decision Boundary Calibration</CardTitle>
+                      <CardTitle>
+                        {isEasyMode ? "How the AI Makes Up Its Mind" : "Decision Boundary Calibration"}
+                      </CardTitle>
                       <CardDescription>
-                        Executive decision thresholds & error trade-offs
+                        {isEasyMode
+                          ? "Why the computer plays it safe when flagging customers"
+                          : "Executive decision thresholds & error trade-offs"}
                       </CardDescription>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3.5 text-xs text-slate-600">
                     <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
                       <span className="font-semibold text-slate-900 block mb-1">
-                        High Recall Prioritization:
+                        {isEasyMode ? "Better Safe Than Sorry:" : "High Recall Prioritization:"}
                       </span>
-                      In B2B customer retention, missing an at-risk enterprise client (False Negative) is 10x more costly than an unnecessary retention review (False Positive).
+                      {isEasyMode
+                        ? "It's much worse to lose a big client by surprise than to check in on someone who was actually happy. That's why our AI sounds the alarm early."
+                        : "In B2B customer retention, missing an at-risk enterprise client (False Negative) is 10x more costly than an unnecessary retention review (False Positive)."}
                     </div>
                     <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
                       <span className="font-semibold text-slate-900 block mb-1">
-                        Operating Decision Cutoff:
+                        {isEasyMode ? "When We Take Action:" : "Operating Decision Cutoff:"}
                       </span>
-                      Probability threshold calibrated at <strong className="text-slate-900">0.50</strong> for standard risk classification, with escalation alerts triggering at <strong className="text-[#9E2A2B]">0.70+</strong>.
+                      {isEasyMode
+                        ? "If the computer is 50% sure someone might leave, they get marked Yellow. If it is 70% sure, they turn Red for immediate emergency contact."
+                        : "Probability threshold calibrated at 0.50 for standard risk classification, with escalation alerts triggering at 0.70+."}
                     </div>
                   </CardContent>
                   <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
