@@ -85,22 +85,6 @@ export const AppHeader: React.FC = () => {
           <span>{isEasyMode ? '💡 Easy Mode: ON' : '💡 Enter Easy Mode'}</span>
         </button>
 
-        {/* Toggle Error Simulation for Testing */}
-        <button
-          onClick={toggleSimulateErrors}
-          title="Toggle simulated API errors to inspect error and retry handling states"
-          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
-            simulateApiErrors
-              ? 'bg-[#FDF2F2] text-[#9E2A2B] border-[#F5B8B9] font-semibold animate-pulse'
-              : 'bg-white/80 text-slate-500 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <AlertCircle className="w-3.5 h-3.5" />
-          <span className="text-[11px]">
-            {simulateApiErrors ? 'API Error: ON' : 'Test Error'}
-          </span>
-        </button>
-
         {/* User Profile */}
         {user ? (
           <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">

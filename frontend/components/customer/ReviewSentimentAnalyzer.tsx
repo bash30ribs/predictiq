@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { CustomerReviewAnalysisResponse, SentimentType } from '@/lib/types';
 import { useAppStore } from '@/store/useAppStore';
+import { apiClient } from '@/lib/api';
 
 interface StoredReview {
   id: number;
@@ -63,6 +64,7 @@ const SAMPLE_TEMPLATES = [
 export const ReviewSentimentAnalyzer: React.FC = () => {
   const { user, isEasyMode } = useAppStore();
   const [reviews, setReviews] = useState<StoredReview[]>([]);
+  const [accountOptions, setAccountOptions] = useState<{ id: string; name: string }[]>(ACCOUNT_PRESETS);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [filterSentiment, setFilterSentiment] = useState<string>('ALL');
@@ -76,6 +78,21 @@ export const ReviewSentimentAnalyzer: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [isSeedingReviews, setIsSeedingReviews] = useState<boolean>(false);
+
+  // Dynamically load user's customer accounts from DB if available
+  useEffect(() => {
+    const loadCustomerAccounts = async () => {
+      try {
+        const res = await apiClient.getCustomers({ pageSize: 50, userId: user?.id });
+        if (res.customers && res.customers.length > 0) {
+          const mapped = res.customers.map((c) => ({ id: c.customer_id, name: c.name }));
+          setAccountOptions(mapped);
+          setSelectedAccount(mapped[0]);
+        }
+      } catch (err) {}
+    };
+    loadCustomerAccounts();
+  }, [user?.id]);
 
   const fetchReviews = async () => {
     try {
@@ -347,12 +364,12 @@ export const ReviewSentimentAnalyzer: React.FC = () => {
                 <select
                   value={selectedAccount.id}
                   onChange={(e) => {
-                    const found = ACCOUNT_PRESETS.find((a) => a.id === e.target.value);
+                    const found = accountOptions.find((a) => a.id === e.target.value);
                     if (found) setSelectedAccount(found);
                   }}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:border-[#12233D] focus:ring-1 focus:ring-[#12233D] focus:outline-none bg-white text-slate-800"
                 >
-                  {ACCOUNT_PRESETS.map((acc) => (
+                  {accountOptions.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name} ({acc.id})
                     </option>

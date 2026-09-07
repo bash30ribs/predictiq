@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 export const FeatureGrid: React.FC = () => {
   const features = [
     {
+      id: 'radar',
       icon: <Radar className="w-5 h-5 text-[#12233D]" />,
       badge: 'Early Signal Detection',
       title: '60-Day Proactive Churn Radar',
@@ -28,6 +29,7 @@ export const FeatureGrid: React.FC = () => {
       stat: '60 Days Notice',
     },
     {
+      id: 'explainability',
       icon: <Cpu className="w-5 h-5 text-[#2E6B4E]" />,
       badge: 'Transparent Explainable AI',
       title: 'SHAP Contribution Breakdown',
@@ -38,6 +40,7 @@ export const FeatureGrid: React.FC = () => {
       stat: '100% Transparent',
     },
     {
+      id: 'simulator',
       icon: <Sliders className="w-5 h-5 text-[#C77D2E]" />,
       badge: 'Counterfactual Sandbox',
       title: 'Live What-If Retention Simulator',
@@ -48,6 +51,7 @@ export const FeatureGrid: React.FC = () => {
       stat: '-34% Risk Drop',
     },
     {
+      id: 'roi-summary',
       icon: <BarChart3 className="w-5 h-5 text-[#12233D]" />,
       badge: 'Executive Financial Impact',
       title: 'ARR Impact & ROI Cockpit',
@@ -82,7 +86,8 @@ export const FeatureGrid: React.FC = () => {
         {features.map((item, idx) => (
           <div
             key={idx}
-            className="group relative bg-white/80 backdrop-blur-xl border border-slate-200/90 hover:border-slate-300 rounded-2xl p-7 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+            id={item.id}
+            className="scroll-mt-24 group relative bg-white/80 backdrop-blur-xl border border-slate-200/90 hover:border-slate-300 rounded-2xl p-7 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">

@@ -21,9 +21,11 @@ import {
   Download,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function BusinessImpactPage() {
+  const router = useRouter();
   const { isEasyMode } = useAppStore();
   const [impact, setImpact] = useState<BusinessImpactSummary | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -48,6 +50,29 @@ export default function BusinessImpactPage() {
   useEffect(() => {
     fetchImpactSummary();
   }, []);
+
+  const handleExportImpactCsv = () => {
+    if (!impact) return;
+    const headers = "Category,Segment or Contract,Customers at Risk,Monthly MRR at Risk,Metric\n";
+    const segmentRows = impact.segments
+      .map(
+        (s) =>
+          `"Customer Segment","${s.segment}",${s.customers_at_risk},${s.mrr_at_risk},"${(s.avg_churn_prob * 100).toFixed(1)}% avg churn prob"`
+      )
+      .join('\n');
+    const contractRows = impact.contract_breakdown
+      .map(
+        (c) =>
+          `"Contract Agreement","${c.contract}",${c.customers_at_risk},${c.mrr_at_risk},"${((c.mrr_at_risk / impact.mrr_at_risk) * 100).toFixed(1)}% risk share"`
+      )
+      .join('\n');
+    const blob = new Blob([headers + segmentRows + '\n' + contractRows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `predictiq_revenue_at_risk_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
 
   const activeScenario: RetentionScenario | null =
     impact && impact.retention_scenarios[selectedScenarioIndex]
@@ -91,8 +116,17 @@ export default function BusinessImpactPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExportImpactCsv}
+              disabled={!impact}
+              leftIcon={<Download className="w-3.5 h-3.5" />}
+            >
+              {isEasyMode ? "Download Report" : "Export Impact CSV"}
+            </Button>
             <Link href="/customers">
-              <Button size="sm" variant="outline" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+              <Button size="sm" variant="primary" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
                 {isEasyMode ? "See Customers Who Need Help" : "Review Priority Accounts"}
               </Button>
             </Link>
@@ -292,9 +326,15 @@ export default function BusinessImpactPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-100 font-normal">
                         {impact.segments.map((seg) => (
-                          <tr key={seg.segment} className="hover:bg-slate-50/70">
-                            <td className="py-2.5 px-4 font-semibold text-slate-900">
-                              {seg.segment}
+                          <tr
+                            key={seg.segment}
+                            onClick={() => router.push(`/customers?search=${encodeURIComponent(seg.segment)}`)}
+                            className="hover:bg-slate-100/80 transition-colors cursor-pointer group"
+                            title={`Filter customers by ${seg.segment} segment`}
+                          >
+                            <td className="py-2.5 px-4 font-semibold text-slate-900 group-hover:text-[#12233D] flex items-center gap-1.5">
+                              <span>{seg.segment}</span>
+                              <ArrowRight className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 group-hover:text-[#12233D] transition-all" />
                             </td>
                             <td className="py-2.5 px-4 text-slate-700">
                               {seg.customers_at_risk.toLocaleString()} accounts
@@ -338,9 +378,15 @@ export default function BusinessImpactPage() {
                         {impact.contract_breakdown.map((item) => {
                           const pct = ((item.mrr_at_risk / impact.mrr_at_risk) * 100).toFixed(1);
                           return (
-                            <tr key={item.contract} className="hover:bg-slate-50/70">
-                              <td className="py-2.5 px-4 font-semibold text-slate-900">
-                                {item.contract}
+                            <tr
+                              key={item.contract}
+                              onClick={() => router.push(`/customers?search=${encodeURIComponent(item.contract)}`)}
+                              className="hover:bg-slate-100/80 transition-colors cursor-pointer group"
+                              title={`Filter customers by ${item.contract} contract`}
+                            >
+                              <td className="py-2.5 px-4 font-semibold text-slate-900 group-hover:text-[#12233D] flex items-center gap-1.5">
+                                <span>{item.contract}</span>
+                                <ArrowRight className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 group-hover:text-[#12233D] transition-all" />
                               </td>
                               <td className="py-2.5 px-4 text-slate-700">
                                 {item.customers_at_risk.toLocaleString()}

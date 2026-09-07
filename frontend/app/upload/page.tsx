@@ -27,6 +27,7 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingQuality, setIsLoadingQuality] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const fetchQualityProfile = async () => {
@@ -59,10 +60,14 @@ export default function UploadPage() {
   const handleSimulateUpload = async (file?: File) => {
     setIsUploading(true);
     setError(null);
+    setUploadSuccess(null);
     try {
       const uploadRes = await apiClient.uploadDataset(file || null, user?.id);
       const qualityRes = await apiClient.getDataQuality(uploadRes.dataset_id);
       setActiveDataset(uploadRes, qualityRes);
+      setUploadSuccess(
+        `Successfully ingested "${uploadRes.file_name}" (${uploadRes.row_count.toLocaleString()} customer records). Data quality score: ${qualityRes.health_score}/100.`
+      );
     } catch (err: any) {
       setError(err?.message || "Dataset upload failed. Please try again.");
     } finally {
@@ -126,6 +131,35 @@ export default function UploadPage() {
             onRetry={fetchQualityProfile}
             isRetrying={isLoadingQuality || isUploading}
           />
+        )}
+
+        {/* Upload Success Banner */}
+        {uploadSuccess && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {isEasyMode ? "Spreadsheet Loaded Successfully!" : "Customer Dataset Ingested & Calibrated"}
+                </div>
+                <div className="text-xs text-emerald-800 mt-0.5">{uploadSuccess}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <Link href="/customers">
+                <Button size="sm" variant="outline" className="text-xs border-emerald-300 text-emerald-900 hover:bg-emerald-100">
+                  {isEasyMode ? "View Customer List" : "Explore Customer Directory"}
+                </Button>
+              </Link>
+              <Link href="/training">
+                <Button size="sm" variant="primary" className="text-xs shadow-xs" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+                  {isEasyMode ? "Train AI Brain Now" : "Proceed to Model Training"}
+                </Button>
+              </Link>
+            </div>
+          </div>
         )}
 
         {/* Top: Drag & Drop Zone */}

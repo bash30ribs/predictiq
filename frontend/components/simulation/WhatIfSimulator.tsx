@@ -19,7 +19,8 @@ interface WhatIfSimulatorProps {
 export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
   initialCustomerId = 'C1024',
 }) => {
-  const { isEasyMode } = useAppStore();
+  const { isEasyMode, user } = useAppStore();
+  const [customerOptions, setCustomerOptions] = useState<typeof mockCustomersList>(mockCustomersList);
   const [customerId, setCustomerId] = useState<string>(initialCustomerId);
   const [tenure, setTenure] = useState<number>(8);
   const [monthlyCharges, setMonthlyCharges] = useState<number>(1299);
@@ -30,27 +31,53 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
   const [simulation, setSimulation] = useState<WhatIfSimulationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Load available customer accounts from database
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const res = await apiClient.getCustomers({ pageSize: 50, userId: user?.id });
+        if (res.customers && res.customers.length > 0) {
+          setCustomerOptions(res.customers as any);
+          if (!initialCustomerId || initialCustomerId === 'C1024') {
+            const first = res.customers[0];
+            setCustomerId(first.customer_id);
+            setTenure(first.tenure);
+            setMonthlyCharges(first.monthly_charges);
+            setContract(first.contract);
+            setSupportCalls(first.support_calls);
+          }
+        }
+      } catch (err) {}
+    };
+    loadAccounts();
+  }, [user?.id]);
+
   // Sync with selected customer if customerId changes
   useEffect(() => {
-    const found = mockCustomersList.find((c) => c.customer_id === customerId);
+    const found = customerOptions.find((c) => c.customer_id === customerId);
     if (found) {
       setTenure(found.tenure);
       setMonthlyCharges(found.monthly_charges);
       setContract(found.contract);
       setSupportCalls(found.support_calls);
     }
-  }, [customerId]);
+  }, [customerId, customerOptions]);
 
-  const runSimulation = async () => {
+  const runSimulation = async (overrideParams?: {
+    tenure?: number;
+    monthly_charges?: number;
+    contract?: ContractType;
+    support_calls?: number;
+  }) => {
     setIsLoading(true);
     setError(null);
     try {
       const res = await apiClient.simulateWhatIf({
         customer_id: customerId,
-        tenure,
-        monthly_charges: monthlyCharges,
-        contract,
-        support_calls: supportCalls,
+        tenure: overrideParams?.tenure ?? tenure,
+        monthly_charges: overrideParams?.monthly_charges ?? monthlyCharges,
+        contract: overrideParams?.contract ?? contract,
+        support_calls: overrideParams?.support_calls ?? supportCalls,
       });
       setSimulation(res);
     } catch (err: any) {
@@ -60,10 +87,27 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
     }
   };
 
-  // Run initial simulation
+  // Real-time automatic recalculation on any lever change (debounced 200ms)
   useEffect(() => {
-    runSimulation();
-  }, [customerId]);
+    const timer = setTimeout(() => {
+      runSimulation();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [customerId, tenure, monthlyCharges, contract, supportCalls]);
+
+  const handleApplyBestFix = async () => {
+    const newContract: ContractType = 'One year';
+    const newCalls = 1;
+    const newMonthly = Math.round(monthlyCharges * 0.85);
+    setContract(newContract);
+    setSupportCalls(newCalls);
+    setMonthlyCharges(newMonthly);
+    await runSimulation({
+      contract: newContract,
+      support_calls: newCalls,
+      monthly_charges: newMonthly,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -89,7 +133,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
       {error && (
         <ErrorBanner
           message={error}
-          onRetry={runSimulation}
+          onRetry={() => runSimulation()}
           isRetrying={isLoading}
         />
       )}
@@ -106,7 +150,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             onChange={(e) => setCustomerId(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-slate-800 font-medium focus:ring-1 focus:ring-[#12233D]"
           >
-            {mockCustomersList.map((c) => (
+            {customerOptions.map((c) => (
               <option key={c.customer_id} value={c.customer_id}>
                 {c.customer_id} — {c.name} ({c.risk_level} Risk, ${c.monthly_charges}/mo)
               </option>
@@ -118,12 +162,8 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              // Quick preset: Apply Retention Strategy (Annual + resolved tickets)
-              setContract('One year');
-              setSupportCalls(1);
-              setMonthlyCharges(Math.round(monthlyCharges * 0.85));
-            }}
+            onClick={handleApplyBestFix}
+            isLoading={isLoading}
             leftIcon={<Sparkles className="w-3.5 h-3.5 text-[#C77D2E]" />}
           >
             {isEasyMode ? "⚡ Apply Best Fix: 1-Year + 15% Discount" : "Apply Standard Retention Offer"}
@@ -132,7 +172,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             size="sm"
             variant="primary"
             isLoading={isLoading}
-            onClick={runSimulation}
+            onClick={() => runSimulation()}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
           >
             {isEasyMode ? "Recalculate Score" : "Recalculate Churn Risk"}
@@ -270,7 +310,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
                   className="w-full"
                   variant="primary"
                   isLoading={isLoading}
-                  onClick={runSimulation}
+                  onClick={() => runSimulation()}
                 >
                   Run Simulation Scenario
                 </Button>

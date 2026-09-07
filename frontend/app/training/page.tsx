@@ -31,6 +31,7 @@ export default function TrainingPage() {
   const [progressPct, setProgressPct] = useState(0);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trainingSuccess, setTrainingSuccess] = useState<string | null>(null);
 
   const fetchMetrics = async () => {
     setIsLoadingMetrics(true);
@@ -54,6 +55,7 @@ export default function TrainingPage() {
   const handleTrainModel = async () => {
     setIsTraining(true);
     setError(null);
+    setTrainingSuccess(null);
     setProgressPct(15);
     setTrainingStep("Phase 1/4: Encoding categorical variables and scaling features...");
 
@@ -74,6 +76,14 @@ export default function TrainingPage() {
         await apiClient.trainModel(selectedAlgo);
         const evalRes = await apiClient.getModelEvaluation();
         setModelEvaluation(evalRes);
+        const algoName = {
+          xgboost: 'XGBoost Classifier v2.1',
+          random_forest: 'Random Forest Classifier v1.4',
+          logistic_regression: 'Logistic Regression v1.0',
+        }[selectedAlgo];
+        setTrainingSuccess(
+          `Model retraining complete using ${algoName}! Test accuracy: ${(evalRes.metrics.accuracy * 100).toFixed(1)}%, Catch rate: ${(evalRes.metrics.recall * 100).toFixed(1)}%. Successfully deployed to active production scoring.`
+        );
       } catch (err: any) {
         setError(err?.message || "Training job interrupted.");
       } finally {
@@ -137,6 +147,35 @@ export default function TrainingPage() {
             onRetry={fetchMetrics}
             isRetrying={isLoadingMetrics || isTraining}
           />
+        )}
+
+        {/* Training Success Notification Banner */}
+        {trainingSuccess && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {isEasyMode ? "AI Model Brain Successfully Updated!" : "Production Model Calibrated & Active"}
+                </div>
+                <div className="text-xs text-emerald-800 mt-0.5">{trainingSuccess}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <Link href="/customers">
+                <Button size="sm" variant="outline" className="text-xs border-emerald-300 text-emerald-900 hover:bg-emerald-100">
+                  {isEasyMode ? "Check Customer Scores" : "View Customer Scores"}
+                </Button>
+              </Link>
+              <Link href="/simulation">
+                <Button size="sm" variant="primary" className="text-xs shadow-xs" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+                  {isEasyMode ? "Open What-If Sandbox" : "Open What-If Simulator"}
+                </Button>
+              </Link>
+            </div>
+          </div>
         )}
 
         {/* Training Trigger Box */}
